@@ -102,11 +102,16 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler
+// 404 handler - log the requested route for debugging
 app.use((req, res) => {
+  console.log('❌ 404 - Route not found:', req.method, req.originalUrl);
+  console.log('   Available routes: /api/auth, /api/doctor, /api/patient, etc.');
   res.status(404).json({
     success: false,
-    message: 'Route not found'
+    message: 'Route not found',
+    requestedPath: req.originalUrl,
+    method: req.method,
+    hint: 'All API routes are prefixed with /api/'
   });
 });
 

@@ -5,45 +5,41 @@ import storage from '../utils/storage';
 // Backend: https://modex-2.onrender.com
 // Full API base: https://modex-2.onrender.com/api
 
-// Get API URL from environment variable or use default
-let API_URL = process.env.REACT_APP_API_URL || 'https://modex-2.onrender.com/api';
-
-// CRITICAL FIX: Ensure API_URL ALWAYS includes /api prefix
-// This handles cases where env var is set incorrectly
+// PRODUCTION BACKEND URL - HARDCODED FOR RELIABILITY
+// Backend: https://modex-2.onrender.com
+// All routes are prefixed with /api/
 const BACKEND_DOMAIN = 'modex-2.onrender.com';
+const DEFAULT_API_URL = `https://${BACKEND_DOMAIN}/api`;
 
-// Normalize the URL
-API_URL = API_URL.trim();
+// Get API URL from environment variable or use default
+let API_URL = process.env.REACT_APP_API_URL || DEFAULT_API_URL;
 
-// If it doesn't contain /api, add it
-if (!API_URL.includes('/api')) {
-  // Remove trailing slash
-  API_URL = API_URL.replace(/\/+$/, '');
-  // Add /api
-  API_URL = API_URL + '/api';
-} else {
-  // If it contains /api, ensure it's at the end
-  // Remove any trailing slashes first
-  API_URL = API_URL.replace(/\/+$/, '');
-  // If /api is not at the end, fix it
-  if (!API_URL.endsWith('/api')) {
-    // Extract domain
+// CRITICAL: Normalize and ensure /api is always present
+API_URL = String(API_URL).trim();
+
+// Remove trailing slashes
+API_URL = API_URL.replace(/\/+$/, '');
+
+// If URL doesn't end with /api, add it
+if (!API_URL.endsWith('/api')) {
+  // If it's just the domain, add /api
+  if (API_URL.includes(BACKEND_DOMAIN) && !API_URL.includes('/api')) {
+    API_URL = `https://${BACKEND_DOMAIN}/api`;
+  } else {
+    // Extract domain and add /api
     const domainMatch = API_URL.match(/https?:\/\/[^\/]+/);
     if (domainMatch) {
       API_URL = domainMatch[0] + '/api';
     } else {
-      API_URL = 'https://' + BACKEND_DOMAIN + '/api';
+      API_URL = DEFAULT_API_URL;
     }
   }
 }
 
-// Final cleanup - remove trailing slash
-API_URL = API_URL.replace(/\/+$/, '');
-
-// Verify it's correct
+// Final verification - if still wrong, use default
 if (!API_URL.includes(BACKEND_DOMAIN) || !API_URL.endsWith('/api')) {
-  console.error('⚠️ API_URL configuration error, using fallback');
-  API_URL = 'https://' + BACKEND_DOMAIN + '/api';
+  console.warn('⚠️ API_URL invalid, using default:', DEFAULT_API_URL);
+  API_URL = DEFAULT_API_URL;
 }
 
 // Log API URL for debugging (always log in production for troubleshooting)
