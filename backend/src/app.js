@@ -25,7 +25,21 @@ const app = express();
 // Note: Database connection is handled in server.js, not here
 
 // Middleware
-app.use(cors());
+// CORS configuration - allow frontend connections
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    process.env.FRONTEND_URL,
+    // Common deployment platforms
+    /\.vercel\.app$/,
+    /\.netlify\.app$/,
+    /\.onrender\.com$/
+  ].filter(Boolean), // Remove undefined values
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
