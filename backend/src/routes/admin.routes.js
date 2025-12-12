@@ -16,3 +16,4 @@ router.get('/receptionists', getReceptionists);
 module.exports = router;
 
 
+

@@ -51,3 +51,4 @@ appointmentSchema.index({ doctor: 1, appointmentDate: 1, 'slotTime.startTime': 1
 module.exports = mongoose.model('Appointment', appointmentSchema);
 
 
+

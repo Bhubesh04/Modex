@@ -64,3 +64,4 @@ const AllPatients = () => {
 export default AllPatients;
 
 
+

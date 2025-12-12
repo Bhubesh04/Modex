@@ -58,3 +58,4 @@ const doctorProfileSchema = new mongoose.Schema({
 module.exports = mongoose.model('DoctorProfile', doctorProfileSchema);
 
 
+

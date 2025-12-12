@@ -155,3 +155,4 @@ const RegisterReceptionist = () => {
 export default RegisterReceptionist;
 
 
+
