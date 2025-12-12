@@ -44,9 +44,22 @@ export const AuthProvider = ({ children }) => {
       }
       return { success: false, message: response.message };
     } catch (error) {
+      // Better error handling
+      let errorMessage = 'Login failed';
+      
+      if (!error.response) {
+        errorMessage = 'Unable to connect to server. Please check if the backend is running.';
+      } else if (error.response.status === 404) {
+        errorMessage = 'API endpoint not found. Please check the backend configuration.';
+      } else if (error.response.status === 500) {
+        errorMessage = 'Server error. Please try again later.';
+      } else {
+        errorMessage = error.response?.data?.message || error.message || 'Login failed';
+      }
+      
       return { 
         success: false, 
-        message: error.response?.data?.message || 'Login failed' 
+        message: errorMessage
       };
     }
   };

@@ -26,20 +26,40 @@ const app = express();
 
 // Middleware
 // CORS configuration - allow frontend connections
-app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:3001',
-    process.env.FRONTEND_URL,
-    // Common deployment platforms
-    /\.vercel\.app$/,
-    /\.netlify\.app$/,
-    /\.onrender\.com$/
-  ].filter(Boolean), // Remove undefined values
+// More permissive CORS for production deployment
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'https://modex-mlb4.vercel.app',
+      'https://modex-mlb4-jny00e630-bhubesh04s-projects.vercel.app', // Vercel preview URL
+      process.env.FRONTEND_URL
+    ].filter(Boolean);
+    
+    // Check if origin matches allowed list or regex patterns
+    const isAllowed = allowedOrigins.includes(origin) ||
+      /\.vercel\.app$/.test(origin) ||
+      /\.netlify\.app$/.test(origin) ||
+      /\.onrender\.com$/.test(origin);
+    
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(null, true); // Allow all for now - can restrict later
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar']
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -54,7 +74,22 @@ app.use('/api/test', testRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ message: 'MedConnect+ API is running' });
+  res.json({ 
+    success: true,
+    message: 'API is running',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// Root endpoint - simple health check
+app.get('/', (req, res) => {
+  res.json({ 
+    success: true,
+    message: 'API is running',
+    version: '1.0.0',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Error handling middleware

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authApi } from '../../api/authApi';
 import ErrorBox from '../../components/ErrorBox';
+import axiosInstance from '../../api/axiosInstance';
 
 const RegisterDoctor = () => {
   const navigate = useNavigate();
@@ -20,6 +21,26 @@ const RegisterDoctor = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [apiConnected, setApiConnected] = useState(null);
+
+  // Test API connection on component mount
+  useEffect(() => {
+    const testConnection = async () => {
+      try {
+        const response = await axiosInstance.get('/health');
+        if (response.data) {
+          setApiConnected(true);
+          console.log('✅ Backend API connected:', response.data);
+        }
+      } catch (err) {
+        setApiConnected(false);
+        console.error('❌ Backend API connection failed:', err);
+        setError('Unable to connect to backend server. Please ensure the backend is running at https://modex-2.onrender.com');
+      }
+    };
+    
+    testConnection();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({
@@ -47,20 +68,51 @@ const RegisterDoctor = () => {
 
     try {
       const { confirmPassword, ...registrationData } = formData;
+      
+      // Log the API call for debugging
+      console.log('📤 Registering doctor with data:', {
+        ...registrationData,
+        experience: parseInt(registrationData.experience),
+        consultationFee: parseFloat(registrationData.consultationFee) || 500
+      });
+      
       const response = await authApi.registerDoctor({
         ...registrationData,
         experience: parseInt(registrationData.experience),
         consultationFee: parseFloat(registrationData.consultationFee) || 500
       });
 
+      console.log('✅ Registration response:', response);
+
       if (response.success) {
         setSuccess('Doctor account created successfully! Redirecting to login...');
         setTimeout(() => {
-          navigate('/login');
+          navigate('/login/doctor');
         }, 2000);
+      } else {
+        setError(response.message || 'Registration failed. Please try again.');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+      console.error('❌ Registration error:', err);
+      console.error('   Error response:', err.response);
+      console.error('   Error message:', err.message);
+      
+      // Better error handling
+      let errorMessage = 'Registration failed. Please try again.';
+      
+      if (!err.response) {
+        errorMessage = 'Unable to connect to server. Please check your internet connection and ensure the backend is running.';
+      } else if (err.response.status === 404) {
+        errorMessage = 'API endpoint not found. The registration endpoint may not be available.';
+      } else if (err.response.status === 400) {
+        errorMessage = err.response?.data?.message || 'Invalid registration data. Please check all fields.';
+      } else if (err.response.status >= 500) {
+        errorMessage = 'Server error. Please try again later.';
+      } else {
+        errorMessage = err.response?.data?.message || err.message || 'Registration failed. Please try again.';
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -74,6 +126,17 @@ const RegisterDoctor = () => {
           <h3 className="text-xl font-semibold">Doctor Registration</h3>
         </div>
         
+        {apiConnected === false && (
+          <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
+            <p className="font-semibold">⚠️ Backend Connection Issue</p>
+            <p className="text-sm">Unable to connect to backend server. Please check:</p>
+            <ul className="text-sm list-disc list-inside mt-2">
+              <li>Backend is running at: https://modex-2.onrender.com</li>
+              <li>Environment variable REACT_APP_API_URL is set correctly</li>
+              <li>Check browser console for detailed error messages</li>
+            </ul>
+          </div>
+        )}
         {error && <ErrorBox message={error} onClose={() => setError('')} />}
         {success && (
           <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
