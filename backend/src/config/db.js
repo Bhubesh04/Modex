@@ -1,0 +1,22 @@
+const mongoose = require('mongoose');
+const { MONGODB_URI } = require('./env');
+
+const connectDB = async () => {
+  try {
+    console.log('🔌 Connecting to MongoDB...');
+    console.log('   URI:', MONGODB_URI.replace(/\/\/.*@/, '//***:***@')); // Hide credentials in log
+    const conn = await mongoose.connect(MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+    console.log(`   Database: ${conn.connection.name}`);
+  } catch (error) {
+    console.error(`❌ MongoDB Connection Error: ${error.message}`);
+    console.error('   Please check your MongoDB URI in .env file');
+    process.exit(1);
+  }
+};
+
+module.exports = connectDB;
+
